@@ -1,7 +1,7 @@
 # Flask-Mqtt-DashBoard
 Flask App, Blueprint , mongodb, Dashboard for displaying Ph data of a Customer  
 
-Inslallation
+Installation
 --------------
 1. Install all the dependencies from requirements.txt using $ pip instlall 'dependency name'
 2. Update your db host url and port in Farm_sensor/__init__.py 
