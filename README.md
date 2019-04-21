@@ -3,7 +3,7 @@ Flask App, Blueprint , mongodb, Dashboard for displaying Ph data of a Customer
 
 Inslallation
 --------------
-1. Install all the dependencies from requirements.txt using $ pip instlall <dependency name>
+1. Install all the dependencies from requirements.txt using $ pip instlall 'dependency name'
 2. Update your db host url and port in Farm_sensor/__init__.py 
 3. Update your db collection in Farm_sensor/models.py 
 
