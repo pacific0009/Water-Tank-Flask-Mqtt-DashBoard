@@ -6,16 +6,21 @@ from flask_bootstrap import Bootstrap
 #from flask_mongoengine import MongoEngineSessionInterface
 
 app = Flask(__name__)
-Bootstrap(app)
+#
+# Add/register blueprint components
+#
 app.register_blueprint(web_site)
+#
+# add here all your app configuration key value
+#
 app.config['MONGODB_SETTINGS'] = {
     'db': 'test',
-    'host': '<Provide your host address>'
+    'host': '<your db url>'
 }
-
-app.config['SECRET_KEY'] = 'thisismysecrattekey'
-db.init_app(app)
+app.config['SECRET_KEY'] = 'thisismysecrattekey' 
 #app.session_interface = MongoEngineSessionInterface(db)
-
+db.init_app(app) # initalizing DB
 login_manager.init_app(app)
-login_manager.login_view = 'website.login'
+login_manager.login_view = 'website.login' #redirects to login view on logout
+Bootstrap(app)
+

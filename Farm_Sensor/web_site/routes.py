@@ -10,9 +10,6 @@ import random
 login_manager = LoginManager()
 
 app_module = Blueprint('website',__name__, template_folder='templates')
-@app_module.route('/home')
-def home():
-    return "<h1>You are in home"
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -24,12 +21,15 @@ class RegForm(FlaskForm):
 
 @app_module.route('/login', methods=['GET', 'POST'])
 def login():
+    # Login page Handler
     if current_user.is_authenticated == True:
+        # if authorised redirect to dashboard 
         return redirect(url_for('website.dashboard'))
     form = RegForm()
     if request.method == 'POST':
         if form.validate():
             print("getting user")
+            # validate user
             check_user = Customer.objects(customerId=form.username.data).first()
             if check_user:
                 print("Found")
@@ -48,6 +48,7 @@ def dashboard():
     avgPH= avgPH,
     avgSalinity= avgSalinity,
     avgWater=avgWater)
+
 @app_module.route('/tank/<ID>')
 @login_required
 def tankboard(ID):
@@ -65,11 +66,16 @@ def logout():
     return redirect(url_for('website.login'))
 
 def getAvgOfTanksForCurrent_User(): 
+    #
+    # Modify this function for avg sensor value for dashboard 
+    #
     totalPH = 0
     totalSalinity = 0
     totalWater = 0
     totalTanks = len(current_user.tanks)
+
     for tank in current_user.tanks:
+        # loop through all takns belongs to curent user
         for sensor in tank.sensors:
             print(sensor.id)
             sensorValue = (SensorData.objects(sensorId=sensor).first()).sensorValue
@@ -82,6 +88,9 @@ def getAvgOfTanksForCurrent_User():
     return totalPH/totalTanks, totalSalinity/totalTanks , totalWater/totalTanks  
 
 def prepareTableDataForCurrent_user(startIndex=0, nuberOfItem=10):
+    #
+    # Prepare dashboard table data here
+    # 
     tankTable = []
     count = 0
     for tank in current_user.tanks[startIndex:startIndex+nuberOfItem]:
@@ -104,6 +113,9 @@ def prepareTableDataForCurrent_user(startIndex=0, nuberOfItem=10):
     return tankTable
     
 def prepareTankdata(id):
+    #
+    # prepare data for rendering html template for tankboard
+    #
     tank = Tank.objects(tankId=id).first()
     print(id)
     print(tank)
@@ -121,29 +133,19 @@ def prepareTankdata(id):
         if sensor.sensorType == 'wl':
             newTank["water"] = sensorValue
     return  newTank["ph"],newTank["salinity"],newTank["water"]
-    #return 20,60,90
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 @app_module.route('/populatedata')
 def populatedata():
-    Customer.objects.delete()
-    s1=Sensor(10001,'ph').save()
+    # populate data in database 
+    # don't run call more than one it will give you error for duplicate entry
+    # or modify to add your data 
+    # Type   - Sensor 
+    #   ph   - pH
+    #   sl   - salinity
+    #   wl   - water level
+
+    s1=Sensor(10001,'ph').save()# first argument is sensor Id and second is sensor type 
     s2=Sensor(10002,'sl').save()
     s3=Sensor(10003,'wl').save()
     s4=Sensor(10004,'ph').save()
@@ -161,7 +163,8 @@ def populatedata():
 
     for sensor in Sensor.objects:
         print("woring")
-        SensorData(sensor, str(random.randint(1,100))).save()
+        #populating sensorData table
+        SensorData(sensor, str(random.randint(1,100))).save()# first arg is refrence to sensor and second is sensor value
 
     t1=Tank(1001,500,'-17.0299302','23.2343432','name1',[s1,s2,s3]).save()
     t2=Tank(1002,500,'-17.0299302','23.2343432','xcc2',[s4,s5,s6]).save()
