@@ -1,0 +1,161 @@
+{% extends "bootstrap/base.html" %}
+{% block title %}Tank Health App{% endblock %}
+
+{% block navbar %}
+<div class="navbar navbar-fixed-top">
+
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+        #donutchart,
+        #chart,#ph,#water,#Salinity  {
+          width: 300px;
+          height: 300px;
+          font-family: Arial;
+        }
+        
+        #donutchart {
+            position: relative;
+        }
+        
+        #labelOverlay {
+            width: 90px;
+            height: 45px;
+            position: absolute;
+            top: 130px;
+            left: 120px;
+            text-align: center;
+            cursor: default;
+        }
+        
+        #labelOverlay p {
+          line-height: 0.3;
+          padding:1px;
+          margin: 4px;
+        }
+        
+        #labelOverlay p.used-size {
+          line-height: 0.5;
+          font-size: 20pt;
+          color: #8e8e8e;
+        }
+        
+        #labelOverlay p.total-size {
+          line-height: 0.5;
+          font-size: 12pt;
+          color: #cdcdcd;
+        }
+        #h3{
+            float: right;
+        }
+        </style>
+        <h2>Tank Health App</h1>
+        <h3>{{ name }}</h3>
+        <div class="container">
+        <div class="row">
+                <div id="map"></div>
+                <div id="donutchart" class="col-xs-10 col-sm-3 col-md-3">
+                        <div id="ph"></div>
+                        <div id="labelOverlay">
+                          <p class="used-size">pH</span></p>
+                          <p class="total-size"></p>
+                        </div>
+                </div>
+                <div id="donutchart" class="col-xs-10 col-sm-3 col-md-3">
+                        <div id="Salinity"></div>
+                        <div id="labelOverlay">
+                          <p class="used-size">Salinity</span></p>
+                          <p class="total-size"> Bad</p>
+                        </div>
+                </div>
+                <div id="donutchart" class="col-xs-10 col-sm-3 col-md-3">
+                        <div id="water"></div>
+                        <div id="labelOverlay">
+                          <p class="used-size">Water</span></p>
+                          <p class="total-size"> Bad</p>
+                        </div>
+                </div>
+            </div>
+        </div>
+        
+        <a href='logout'>Logout</a>
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript">
+        google.load("visualization", "1", {packages:["corechart"]});
+        
+        google.setOnLoadCallback(drawChart);
+        function drawChart() {
+            var chart = new google.visualization
+                    .PieChart(document.getElementById('ph'));  
+            chart.draw(data({{avgPH}}), options({{avgPH}}));
+            chart = new google.visualization
+                    .PieChart(document.getElementById('Salinity'));  
+            chart.draw(data({{avgSalinity}}), options({{avgSalinity}}));
+            chart = new google.visualization
+                    .PieChart(document.getElementById('water'));  
+            chart.draw(data({{avgWater}}), options({{avgWater}}));
+
+        }
+        function colr(val){
+            if (val <= 40){
+                return 'Green';
+            } 
+            else if (val <= 60 )
+                return 'Yellow';
+            else if (val <= 80)
+                return 'Orange'
+            else 
+                return 'Red'
+            
+        }
+        
+        function data(val){
+            var data = google.visualization.arrayToDataTable([
+                ['Content', 'Size'],
+                ['',    val],
+                ['',     100-val],
+            ]);
+            return data
+        }
+        
+        function options(val){
+            var option = {
+                title: "",
+                pieHole: 0.7,
+                pieSliceBorderColor: "none",
+             colors: ['#067ab5', '#3aa5dd', '#eaeaea' ],
+                legend: {
+                    position: "none"	
+                },
+                pieSliceText: "none",
+                tooltip: {
+                    trigger: "none"
+                },
+                slices: {
+                    0: { color: colr(val) },
+                    1: { color:  '#cdcdcd'}
+                  }
+            };
+            return option;
+        }
+        </script>
+        <script>
+                // Initialize and add the map
+                function initMap() {
+                  // The location of Uluru
+                  var uluru = {lat: -25.344, lng: 131.036};
+                  // The map, centered at Uluru
+                  var map = new google.maps.Map(
+                      document.getElementById('map'), {zoom: 4, center: uluru});
+                  // The marker, positioned at Uluru
+                  var marker = new google.maps.Marker({position: uluru, map: map});
+                }
+        </script>
+        <script async defer
+            src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
+        </script>
+{% endblock %}
+
+

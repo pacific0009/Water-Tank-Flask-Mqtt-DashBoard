@@ -1,0 +1,22 @@
+<style>
+.space{
+  height: 150px;
+}
+</style>
+<div class="space">
+
+</div>
+<h1 align="center">Farm Tank</h1>
+<div align="center">
+  <h2>Login</h2>
+  <form action="/login" method="post">
+    <p>Customer ID {{ form.username }}</p>
+    
+    <p>Password {{ form.password }}</p>
+    {{ form.hidden_tag() }}
+    <br>
+    <br>
+    <input type="submit" value="Login">
+  </form>
+</div>
+
