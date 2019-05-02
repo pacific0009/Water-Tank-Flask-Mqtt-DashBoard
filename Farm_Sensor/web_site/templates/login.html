@@ -1,22 +1,72 @@
-<style>
-.space{
-  height: 150px;
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Tank Health App</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+  <!-- Bootstrap core CSS -->
+  <link href="{{url_for('static',filename="css/bootstrap.min.css")}}" rel="stylesheet">
+  <!-- Material Design Bootstrap -->
+  <link href="{{url_for('static',filename="css/mdb.min.css")}}" rel="stylesheet">
+  <!-- Your custom styles (optional) -->
+  <link href="{{url_for('static',filename="css/style.css")}}" rel="stylesheet">
+  <link href="{{url_for('static',filename="css/addons/datatables.min.css")}}" rel="stylesheet">
+  <style>
+  .card {
+        margin: 0 auto; /* Added */
+        float: none; /* Added */
+        margin-bottom: 10px; /* Added */
 }
-</style>
-<div class="space">
+  </style>
+</head>
+<body>
 
-</div>
-<h1 align="center">Farm Tank</h1>
-<div align="center">
-  <h2>Login</h2>
-  <form action="/login" method="post">
-    <p>Customer ID {{ form.username }}</p>
+
+<!-- Material  App Name -->
+  <div class="card">
+    <h5 class="card-header primary-color white-text text-center py-4">
+        <strong>Tank Sensor</strong>
+      </h5>
+  </div>
+<!-- Material form login -->
+<div class="container text-center" >
+    <div class="row" >
+        <div class="card" >
     
-    <p>Password {{ form.password }}</p>
-    {{ form.hidden_tag() }}
-    <br>
-    <br>
-    <input type="submit" value="Login">
-  </form>
+            <h5 class="card-header info-color white-text text-center py-4">
+              <strong>Sign in</strong>
+            </h5>
+          
+            <!--Card content-->
+            <div class="card-body px-lg-5 pt-0">
+          
+              <!-- Form -->
+              <form class="text-center" style="color: #757575;" action="/login" method="post" >
+                <div class="md-form">
+                    <p >{{message}}</p>
+
+                    <!-- Customerid -->
+                    <p id="materialLoginUsername" >Customer ID {{ form.username }}</p>
+                    <!-- Password -->
+                    <p id="materialLoginFormPassword">Password {{ form.password }}</p>
+                    {{ form.hidden_tag() }}
+                  
+                </div>
+                <!-- Sign in button -->
+                <button class="btn btn-outline-info btn-rounded btn-block my-4 waves-effect z-depth-0" type="submit">Sign in</button>
+              </form>
+              <!-- Form -->
+          
+            </div>
+          
+          </div>
+    </div>
 </div>
 
+
+</body>
+</html>

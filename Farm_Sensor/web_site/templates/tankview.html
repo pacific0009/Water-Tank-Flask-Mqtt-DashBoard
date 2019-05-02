@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Tank Health App</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+  <!-- Bootstrap core CSS -->
+  <link href="{{url_for('static',filename="css/bootstrap.min.css")}}" rel="stylesheet">
+  <!-- Material Design Bootstrap -->
+  <link href="{{url_for('static',filename="css/mdb.min.css")}}" rel="stylesheet">
+  <!-- Your custom styles (optional) -->
+  <link href="{{url_for('static',filename="css/style.css")}}" rel="stylesheet">
+  <link href="{{url_for('static',filename="css/addons/datatables.min.css")}}" rel="stylesheet">
+  <style>
+        /* Set the size of the div element that contains the map */
+       #map {
+         height: 400px;  /* The height is 400 pixels */
+         width: 80%;  /* The width is the width of the web page */
+         margin-top:20%;
+        }
+        #name {
+          margin-top:20%;
+          margin-left:20%;
+        }
+  </style>
+
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Tank Health</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="/../dashboard">Home <span class="sr-only">(current)</span></a>
+            </li>
+          </ul>
+          <ul class="navbar-nav ">
+  
+                <li class="nav-item dropdown" style="float:right,">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      {{customerName}}
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <a class="dropdown-item" href="/logout">Logout</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+      </nav>
+      
+  <div class="container">
+    <div class="row">
+      
+      <div id="donut-chart" class="col-xs-20 col-sm-3 col-md-4">
+          <canvas id="doughnut-chart-ph" canvas>
+      </div>
+      <div id="donut-chart1" class="col-xs-20 col-sm-3 col-md-4">
+          <canvas id="doughnut-chart-sl" canvas>
+      </div>
+      <div id="donut-chart2" class="col-xs-20 col-sm-3 col-md-4">
+          <canvas id="doughnut-chart-wl" canvas>
+      </div>
+      
+    </div>
+    <div  class="row">
+    <div  class="col-xs-20 col-sm-6 col-md-6">
+      <h3 id="name">{{tankData["name"].title()}}</h3>
+    </div>
+    <div  class="col-xs-20 col-sm-5 col-md-5">
+        <div id="map">
+
+        </div>
+    </div>
+    </div>
+  </div>
+  <p id="links" hidden="true"></p>
+  <!-- /Start your project here-->
+
+  <!-- SCRIPTS -->
+  <!-- MDBootstrap Datatables  -->
+<!-- MDBootstrap Datatables  -->
+  <!-- Chart js-->
+  <script src="https://cdnjs.com/libraries/Chart.js"></script>
+  <!-- JQuery -->
+  <script type="text/javascript" src="{{url_for('static',filename="js/jquery-3.3.1.min.js")}}"></script>
+  <!-- Bootstrap tooltips -->
+  <script type="text/javascript" src="{{url_for('static',filename="js/popper.min.js")}}"></script>
+  <!-- Bootstrap core JavaScript -->
+  <script type="text/javascript" src="{{url_for('static',filename="js/bootstrap.min.js")}}"></script>
+  <!-- MDB core JavaScript -->
+  <script type="text/javascript" src="{{url_for('static',filename="js/mdb.min.js")}}"></script>
+  
+</body>
+
+<script>
+    var tankData = {{tankData|tojson|safe}};
+    // chart plugin taken from http://jsfiddle.net/nkzyx50o/
+    Chart.pluginService.register({
+		beforeDraw: function (chart) {
+			if (chart.config.options.elements.center) {
+        //Get ctx from string
+        var ctx = chart.chart.ctx;
+        
+				//Get options from the center object in options
+        var centerConfig = chart.config.options.elements.center;
+      	var fontStyle = centerConfig.fontStyle || 'Arial';
+				var txt = centerConfig.text;
+        var color = centerConfig.color || '#000';
+        var sidePadding = centerConfig.sidePadding || 20;
+        var sidePaddingCalculated = (sidePadding/100) * (chart.innerRadius * 2)
+        //Start with a base font of 30px
+        ctx.font = "30px " + fontStyle;
+        
+				//Get the width of the string and also the width of the element minus 10 to give it 5px side padding
+        var stringWidth = ctx.measureText(txt).width;
+        var elementWidth = (chart.innerRadius * 2) - sidePaddingCalculated;
+
+        // Find out how much the font can grow in width.
+        var widthRatio = elementWidth / stringWidth;
+        var newFontSize = Math.floor(30 * widthRatio);
+        var elementHeight = (chart.innerRadius * 2);
+
+        // Pick a new font size so it will not be larger than the height of label.
+        var fontSizeToUse = Math.min(newFontSize, elementHeight);
+
+				//Set font settings to draw it correctly.
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        var centerX = ((chart.chartArea.left + chart.chartArea.right) / 2);
+        var centerY = ((chart.chartArea.top + chart.chartArea.bottom) / 2);
+        ctx.font = fontSizeToUse+"px " + fontStyle;
+        ctx.fillStyle = color;
+        
+        //Draw text in center
+        ctx.fillText(txt, centerX, centerY);
+			}
+		}
+	});
+
+
+function drawChart(canvasId,value,text){
+  return new Chart(document.getElementById(canvasId), {
+    type: 'doughnut',
+    data: {
+      datasets: [
+        {
+          label: text,
+          backgroundColor: [getColor(value) , "#cdcdcd"],
+          data: [value,100-value]
+        }
+      ]
+    },
+    options: {
+      tooltips:false,
+      elements: {
+				center: {
+          text: value + '%',
+          color: getColor(value) , // Default is #000000
+          fontStyle: 'Arial', // Default is Arial
+          sidePadding: 20 // Defualt is 20 (as a percentage)
+          }
+        },
+      cutoutPercentage:65,
+      title: {
+        display: true,
+        text: text
+      }
+    }
+  });
+}
+    drawChart("doughnut-chart-wl",tankData.water,"Water");
+    drawChart("doughnut-chart-ph",tankData.ph,"pH");
+    drawChart("doughnut-chart-sl",tankData.salinity,"Salinity");
+
+    function getColor(value) {
+   //modify this function to change donut colour on value
+        return value <= 20 ? 'green' :  // draw for less than 20 values in green
+          value <= 40 ? '#f4d742' :    // else, alternate values yellow
+          value <= 60 ? 'orange':'red';
+      }
+
+    //timer for periodic updating donut chart
+    var timeout = setInterval(reloadTankData, 2000);    
+    function reloadTankData () {
+       //load letest tank status
+       $('#links').load('/../tankdata/{{tankData["id"]}}');
+       //parse letest tank status
+       var newTankData = JSON.parse(document.getElementById("links").innerText)
+       console.log(newTankData) 
+       //redraw if latest sensor value is changed
+       if(tankData.ph != newTankData.ph || tankData.water != newTankData.water ||tankData.salinity != newTankData.salinity ){
+         tankData = newTankData
+        drawChart("doughnut-chart-wl",tankData.water,"Water");
+        drawChart("doughnut-chart-ph",tankData.ph,"pH");
+        drawChart("doughnut-chart-sl",tankData.salinity,"Salinity");
+       }
+       
+    }
+
+        // Initialize and add the map
+        function initMap() {
+          // The location of Uluru
+          var uluru = {lat: Number(tankData.location[0]) ,lng: Number(tankData.location[1])};
+          //var uluru = {lat: 26.791293,lng: 83.437632 };
+
+          // The map, centered at Uluru
+          var map = new google.maps.Map(
+              document.getElementById('map'), {zoom: 4, center: uluru});
+          // The marker, positioned at Uluru
+          var marker = new google.maps.Marker({position: uluru, map: map});
+        }
+            </script>
+            <!--Load the API from the specified URL
+            * The async attribute allows the browser to render the page while the API loads
+            * The key parameter will contain your own API key (which is not needed for this tutorial)
+            * The callback parameter executes the initMap() function
+            -->
+    <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=Your_API_KEY&callback=initMap">
+    </script>
+</html>

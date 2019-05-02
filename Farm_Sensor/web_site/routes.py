@@ -1,4 +1,5 @@
 from flask import Blueprint
+from flask import jsonify
 from flask import render_template, request, redirect, url_for
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField
@@ -19,30 +20,54 @@ class RegForm(FlaskForm):
     username = StringField('username',  validators=[InputRequired(), Length(max=30)])
     password = PasswordField('password', validators=[InputRequired(), Length(min=8, max=20)])
 
+# root page set as dashbord
+@app_module.route('/')
+@login_required
+def ind():
+    #return redirect( url_for('static', filename='index.html'))
+    avgPH, avgSalinity, avgWater = getAvgOfTanksForCurrent_User()
+    return render_template('index.html',
+    name=current_user.name, 
+    tanksTable= prepareTableDataForCurrent_user(),
+    avgPH= avgPH,
+    avgSalinity= avgSalinity,
+    avgWater=avgWater)
+
+#login page 
 @app_module.route('/login', methods=['GET', 'POST'])
 def login():
     # Login page Handler
+    msg = '' #message to user on incorrect login credentials
     if current_user.is_authenticated == True:
         # if authorised redirect to dashboard 
         return redirect(url_for('website.dashboard'))
     form = RegForm()
-    if request.method == 'POST':
+    if request.method == 'POST':#check for form
         if form.validate():
             print("getting user")
             # validate user
             check_user = Customer.objects(customerId=form.username.data).first()
+            msg = "Customer not exist!"
             if check_user:
                 print("Found")
+                #verify password
                 if check_password_hash(check_user['password'], form.password.data):
                     login_user(check_user)
+                    # Open Dashboard page
+                    try:
+                        if "admin" in current_user.role:
+                            return redirect('admin/dashboard')
+                    except:
+                        print("Exception in role")
                     return redirect(url_for('website.dashboard'))
-    return render_template('login.html', form=form)
+                msg = "Incorrect Customer Id or  password!"
+    return render_template('login.html', form=form , message = msg)
 
 @app_module.route('/dashboard')
 @login_required
 def dashboard():
-    avgPH, avgSalinity, avgWater = getAvgOfTanksForCurrent_User()
-    return render_template('dashboard.html',
+    avgPH, avgSalinity, avgWater = getAvgOfTanksForCurrent_User() #calculate average % of data
+    return render_template('index.html',
     name=current_user.name, 
     tanksTable= prepareTableDataForCurrent_user(),
     avgPH= avgPH,
@@ -51,14 +76,22 @@ def dashboard():
 
 @app_module.route('/tank/<ID>')
 @login_required
-def tankboard(ID):
-    ph, salinity, water = prepareTankdata(ID)
-    return render_template('tankboard.html',
-    name=current_user.name, 
-    avgPH= ph,
-    avgSalinity= salinity,
-    avgWater=water)
-
+def tankView(ID):
+    tankData = getTankdata(ID)
+    return render_template('tankview.html',
+    customerName=current_user.name,
+    tankData=tankData)
+#
+# return tank data in json form 
+# used in tankview jqury to get latest data
+#
+@app_module.route('/tankdata/<ID>')
+@login_required
+def tankDataInfoAsHTML(ID):
+    return jsonify( getTankdata(ID))
+#
+# Logout Handler
+#
 @app_module.route('/logout', methods = ['GET'])
 @login_required
 def logout():
@@ -67,7 +100,7 @@ def logout():
 
 def getAvgOfTanksForCurrent_User(): 
     #
-    # Modify this function for avg sensor value for dashboard 
+    # Modify this function for avg sensor value (of dashboard) 
     #
     totalPH = 0
     totalSalinity = 0
@@ -77,20 +110,28 @@ def getAvgOfTanksForCurrent_User():
     for tank in current_user.tanks:
         # loop through all takns belongs to curent user
         for sensor in tank.sensors:
+            # loop through all sensor in Tank 
             print(sensor.id)
+            # get sensor value
             sensorValue = (SensorData.objects(sensorId=sensor).first()).sensorValue
+            # suming sensor values
+            # Replce with your logic for average calculation 
+            #
             if sensor.sensorType == 'ph':
                 totalPH = totalPH + float(sensorValue)
             if sensor.sensorType == 'sl':
                 totalSalinity = totalSalinity + float(sensorValue)
             if sensor.sensorType == 'wl':
                 totalWater = totalWater + float(sensorValue)
-    return totalPH/totalTanks, totalSalinity/totalTanks , totalWater/totalTanks  
+    return round(totalPH/totalTanks,2), round(totalSalinity/totalTanks,2) ,round(totalWater/totalTanks, 2)  
 
-def prepareTableDataForCurrent_user(startIndex=0, nuberOfItem=10):
+
+def prepareTableDataForCurrent_user(startIndex=0, nuberOfItem=1000):
     #
     # Prepare dashboard table data here
-    # 
+    # Returns list of tanks dict with tank propertis 
+    # Limit the output list by giving the start index and maximum requied numberOfItem fom Tanks of current user
+    #
     tankTable = []
     count = 0
     for tank in current_user.tanks[startIndex:startIndex+nuberOfItem]:
@@ -98,6 +139,7 @@ def prepareTableDataForCurrent_user(startIndex=0, nuberOfItem=10):
         newTank = {}
         newTank["tankNumber"] = startIndex+count
         newTank["id"]=tank.tankId
+        newTank["name"] = tank.name
         newTank["location"] = tank.latitude + ", "+tank.longitude
         for sensor in tank.sensors:
             sensorValue = (SensorData.objects(sensorId=sensor).first()).sensorValue
@@ -112,7 +154,7 @@ def prepareTableDataForCurrent_user(startIndex=0, nuberOfItem=10):
     print(tankTable)
     return tankTable
     
-def prepareTankdata(id):
+def getTankdata(id):
     #
     # prepare data for rendering html template for tankboard
     #
@@ -120,74 +162,17 @@ def prepareTankdata(id):
     print(id)
     print(tank)
     newTank = {}
-    newTank["tankNumber"] = tank.tankId
+    newTank["name"] = tank.name
     newTank["id"]=tank.tankId
-    newTank["location"] = tank.latitude + ", "+tank.longitude
+    newTank["location"] = [tank.latitude , tank.longitude]
     for sensor in tank.sensors:
-        sensorValue = (SensorData.objects(sensorId=sensor).first()).sensorValue
+        sensorValue = (SensorData.objects(sensorId=sensor).order_by('-id').first()).sensorValue
         #print("Type {}".format(sensor.sensorType))
+        print(sensor.sensorId)
         if sensor.sensorType == 'ph':
             newTank["ph"] =  sensorValue
         if sensor.sensorType == 'sl':
             newTank["salinity"]= sensorValue
         if sensor.sensorType == 'wl':
             newTank["water"] = sensorValue
-    return  newTank["ph"],newTank["salinity"],newTank["water"]
-
-
-@app_module.route('/populatedata')
-def populatedata():
-    # populate data in database 
-    # don't run call more than one it will give you error for duplicate entry
-    # or modify to add your data 
-    # Type   - Sensor 
-    #   ph   - pH
-    #   sl   - salinity
-    #   wl   - water level
-
-    s1=Sensor(10001,'ph').save()# first argument is sensor Id and second is sensor type 
-    s2=Sensor(10002,'sl').save()
-    s3=Sensor(10003,'wl').save()
-    s4=Sensor(10004,'ph').save()
-    s5=Sensor(10005,'sl').save()
-    s6=Sensor(10006,'wl').save()
-    s7=Sensor(10007,'ph').save()
-    s8=Sensor(10008,'sl').save()
-    s9=Sensor(10009,'wl').save()
-    s10=Sensor(10010,'ph').save()
-    s11=Sensor(10011,'sl').save()
-    s12=Sensor(10012,'wl').save()
-    s13=Sensor(10013,'ph').save()
-    s14=Sensor(10014,'sl').save()
-    s15=Sensor(10015,'wl').save()
-
-    for sensor in Sensor.objects:
-        print("woring")
-        #populating sensorData table
-        SensorData(sensor, str(random.randint(1,100))).save()# first arg is refrence to sensor and second is sensor value
-
-    t1=Tank(1001,500,'-17.0299302','23.2343432','name1',[s1,s2,s3]).save()
-    t2=Tank(1002,500,'-17.0299302','23.2343432','xcc2',[s4,s5,s6]).save()
-    t3=Tank(1003,500,'-17.0299302','23.2343432','name3',[s7,s8,s9]).save()
-    t4=Tank(1004,500,'-17.0299302','23.2343432','xcc4',[s10,s11,s12]).save()
-    t5=Tank(1005,500,'-17.0299302','23.2343432','name5',[s13,s14,s15]).save()
-    #t6=Tank(1006,500,'-17.0299302','23.2343432','xcc6',[s1,s2]).save()
-
-    #Customer(1000000001,generate_password_hash('12341234', method='sha256'),'Anand', 'address','78473574357',[t1]).save()
-    Customer(password=generate_password_hash('12341234', method='sha256'),
-    name='abhilash', address='cbgfd',phone='67576567',tanks=[t2 for t2 in Tank.objects]).save()
-    Customer(password=generate_password_hash('12341234', method='sha256'),
-    name='ramprakas', address='cbgfd',phone='67576567',tanks=[t2 for t2 in Tank.objects]).save()
-    Customer(password=generate_password_hash('12341234', method='sha256'),
-    name='abhilash1', address='cbgfd',phone='67576567',tanks=[t2 for t2 in Tank.objects]).save()
-    Customer(password=generate_password_hash('12341234', method='sha256'),
-    name='abhilash2', address='cbgfd',phone='67576567',tanks=[t2 for t2 in Tank.objects]).save()
-    Customer(password=generate_password_hash('12341234', method='sha256'),
-    name='abhilash3', address='cbgfd',phone='67576567',tanks=[t2 for t2 in Tank.objects]).save()
- 
-    for user in Customer.objects:
-        print(user.customerId)
-        print(user.name)
-        for tank in user.tanks:
-            print(tank.name)
-    return "Sucess"
+    return  newTank

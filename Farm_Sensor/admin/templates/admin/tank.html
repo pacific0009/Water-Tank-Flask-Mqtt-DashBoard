@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<!--Dashboard Page-->
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Tank Health App</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+  <!-- Bootstrap core CSS -->
+  <link href="{{url_for('static',filename="css/bootstrap.min.css")}}" rel="stylesheet">
+  <!-- Material Design Bootstrap -->
+  <link href="{{url_for('static',filename="css/mdb.min.css")}}" rel="stylesheet">
+  <!-- Your custom styles (optional) -->
+  <link href="{{url_for('static',filename="css/style.css")}}" rel="stylesheet">
+  <link href="{{url_for('static',filename="css/addons/datatables.min.css")}}" rel="stylesheet">
+  <style>
+    .container{
+      padding-top: 20px;    }
+  </style>
+</head>
+<body>
+  <!-- Start of Nav Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Tank Health Admin</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="{{url_for('admin.dashboard')}}">Home <span class="sr-only">(current)</span></a>
+            </li>
+          </ul>
+          <ul class="navbar-nav ">
+  
+                <li class="nav-item dropdown" style="float:right,">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      {{name}}
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <a class="dropdown-item" href="/logout">Logout</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+      </nav>
+    <!-- End of Nav Bar --> 
+  <!-- Start your project here-->
+  <div class="container">
+      <!-- Start of donut chart-->
+    <div class="row">
+      <div id="accordion">
+      <div class="card">
+        <div class="card-header" id="addcustomer">
+          <h5 class="mb-0">
+            <button class="btn btn-link" data-toggle="collapse" data-target="#tankinfo" aria-expanded="true" aria-controls="tankinfo">
+              Tank ID: {{currentTank.tankId}}
+            </button>
+          </h5>
+        </div>
+    
+        <div id="tankinfo" class="collapse show" aria-labelledby="addcustomer" data-parent="#accordion">
+          <div class="card-body">
+
+             <p >{{message}}</p>
+              
+             <p id="tankname" >Tank Name:  {{ currentTank.name }}</p>
+             <p id="tank Location" >Location: {{ currentTank.latitude }}, {{currentTank.longitude}}</p>
+             <p id="tankcapacity" >Capacity: {{ currentTank.capacity }}</p> 
+             {% for sensor in currentTank.sensors%}
+             {% if (sensor.sensorType == "ph") %}                    
+             <p id="phsensor" >Ph sensor ID : {{ sensor.sensorId }}</p> 
+             {% endif %} 
+             {% if sensor.sensorType== "sl"%}                    
+             <p id="salinity" >Salinity sensor ID : {{ sensor.sensorId }}</p> 
+             {% endif %} 
+             {% if sensor.sensorType== "wl"%}                    
+             <p id="water" >Water sensor ID : {{ sensor.sensorId }}</p> 
+             {% endif %}     
+             {% endfor %}               
+          </div>
+        </div>
+      </div>
+    </div>
+    </div> 
+
+  <!-- End table View here all  tanks-->
+  <div class="row">
+      <div  class="col-xs-20 col-sm-12 col-md-12">
+      <h3>  Tanks Tank List </h3>
+    <table id="tanksdatatable" class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
+      <thead>
+        <tr>
+          <th class="th-sm">Serial No.
+          </th>
+          <th class="th-sm">Tank ID.
+          </th>
+          <th class="th-sm">Name
+          </th>
+          <th class="th-sm">Location
+          </th>
+          <th class="th-sm">pH Sensor ID
+          </th>
+          <th class="th-sm"> Salinity Sensor ID
+    
+          </th>
+          <th class="th-sm"> Water Sensor ID
+    
+          </th>
+
+        </tr>
+      </thead>
+      <tbody>
+  
+        {% for tank in alltanks %}
+        <tr>
+            <td><a href='{{ tank["id"]}}'>{{ loop.index }}</a></td>
+            <td>{{ tank["id"]}}</td>
+            <td>{{ tank["name"] }}</td>
+            <td>{{ tank["location"]}}</td>
+            <td>{{ tank["phId"]}}</td>
+            <td> {{tank["slId"]}}</td>
+            <td> {{tank["wlId"]}}</td>
+        </tr>
+    {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th>Serial No.
+          </th>
+          <th> Tank ID.
+          </th>
+          <th> Name
+          </th>
+          <th>Location
+          </th>
+          <th>pH Sensor ID
+          </th>
+          <th>Salinity Sensor Id
+          </th>
+          <th>Water Sensor Id
+          </th>
+        </tr>
+      </tfoot>
+    </table>
+      <!-- End table View here-->
+      </div>
+  </div>
+  </div>
+
+
+  <!-- SCRIPTS -->
+  <!-- MDBootstrap Datatables  -->
+<!-- MDBootstrap Datatables  -->
+  <!-- Chart js-->
+  <script src="https://cdnjs.com/libraries/Chart.js"></script>
+  <!-- JQuery -->
+  <script type="text/javascript" src="{{url_for('static',filename="js/jquery-3.3.1.min.js")}}"></script>
+  <script type="text/javascript" src="{{url_for('static',filename="js/addons/datatables.min.js")}}"></script>
+
+  <!-- Bootstrap tooltips -->
+  <script type="text/javascript" src="{{url_for('static',filename="js/popper.min.js")}}"></script>
+  <!-- Bootstrap core JavaScript -->
+  <script type="text/javascript" src="{{url_for('static',filename="js/bootstrap.min.js")}}"></script>
+  <!-- MDB core JavaScript -->
+  <script type="text/javascript" src="{{url_for('static',filename="js/mdb.min.js")}}"></script>
+  
+</body>
+<script>
+// tanks table pagination handler
+$(document).ready(function () {
+  $('#customerdatatable').DataTable({
+    "pagingType": "full" // "simple" option for 'Previous' and 'Next' buttons only
+  });
+  $('.dataTables_length').addClass('bs-select');
+});
+$(document).ready(function () {
+  $('#tanksdatatable').DataTable({
+    "pagingType": "full" // "simple" option for 'Previous' and 'Next' buttons only
+  });
+  $('.dataTables_length').addClass('bs-select');
+});
+</script>
+</html>
